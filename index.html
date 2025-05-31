@@ -98,7 +98,7 @@
       cursor: pointer;
       border-radius: 5px;
       user-select: none;
-      width: 48%;
+      width: 30%;
       box-sizing: border-box;
       display: inline-block;
       text-align: center;
@@ -179,9 +179,17 @@
     <label>Pool Length:</label>
     <div class="session-container">
       <button type="button" class="session-btn active" onclick="selectPoolLength('25', this)">25m</button>
+      <button type="button" class="session-btn" onclick="selectPoolLength('40', this)">40m</button>
       <button type="button" class="session-btn" onclick="selectPoolLength('50', this)">50m</button>
     </div>
     <input type="hidden" id="poolLength" value="25" />
+
+    <label>Start Type:</label>
+    <div class="session-container">
+      <button type="button" class="session-btn active" onclick="selectStartType('Dive', this)">Dive</button>
+      <button type="button" class="session-btn" onclick="selectStartType('Push-off', this)">Push-off</button>
+    </div>
+    <input type="hidden" id="startType" value="Dive" />
 
     <label>Session Type:</label>
     <div class="session-container">
@@ -230,6 +238,11 @@
       toggleActiveButton(btn);
     }
 
+    function selectStartType(type, btn) {
+      document.getElementById('startType').value = type;
+      toggleActiveButton(btn);
+    }
+
     function toggleActiveButton(btn) {
       const buttons = btn.parentNode.querySelectorAll('.session-btn');
       buttons.forEach(b => b.classList.remove('active'));
@@ -244,11 +257,12 @@
       const pool = document.getElementById("pool").value.trim();
       const sessionType = document.getElementById("sessionType").value;
       const poolLength = document.getElementById("poolLength").value;
+      const startType = document.getElementById("startType").value;
 
       if (!validateInputs(event, seconds, date, pool)) return;
 
       const totalSeconds = minutes * 60 + seconds;
-      const entry = { date, event, time: totalSeconds, pool, sessionType, poolLength };
+      const entry = { date, event, time: totalSeconds, pool, sessionType, poolLength, startType };
       const data = JSON.parse(localStorage.getItem(storageKey)) || [];
       data.push(entry);
       localStorage.setItem(storageKey, JSON.stringify(data));
@@ -284,8 +298,9 @@
       document.getElementById("seconds").value = "";
       document.getElementById("date").value = "";
       document.getElementById("pool").value = "";
-      selectSessionType('Training', document.querySelectorAll('.session-container')[1].querySelector('.session-btn'));
+      selectSessionType('Training', document.querySelectorAll('.session-container')[2].querySelector('.session-btn'));
       selectPoolLength('25', document.querySelectorAll('.session-container')[0].querySelector('.session-btn'));
+      selectStartType('Dive', document.querySelectorAll('.session-container')[1].querySelector('.session-btn'));
     }
 
     function clearData() {
@@ -348,6 +363,7 @@
               <th>Pool</th>
               <th>Pool Length</th>
               <th>Session</th>
+              <th>Start Type</th>
               <th>Time (mm:ss.ss)</th>
               <th>Action</th>
             </tr>
@@ -355,23 +371,42 @@
           <tbody>
         `;
 
-        // Sort the entries for the current event by time
+        // Sort the entries for the current event by time and pool name
         if (grouped[eventName] && grouped[eventName].length > 0) {
-          grouped[eventName].sort((a, b) => a.time - b.time); // Sort by time
+          grouped[eventName].sort((a, b) => {
+            // Check if either entry is from "UP Pool"
+            const aIsUpPool = a.pool.includes("UP Pool");
+            const bIsUpPool = b.pool.includes("UP Pool");
+
+            // If both are "UP Pool", sort by time
+            if (aIsUpPool && bIsUpPool) return a.time - b.time;
+
+            // If only a is "UP Pool", it should come after b
+            if (aIsUpPool) return 1;
+
+            // If only b is "UP Pool", it should come after a
+            if (bIsUpPool) return -1;
+
+            // Otherwise, sort by time
+            return a.time - b.time;
+          });
+
           table.innerHTML += grouped[eventName].map(e => `
             <tr class="${personalBests[eventName].index === e.index ? 'personal-best' : ''}">
               <td data-label="Date">${formatDate(e.date)}</td>
               <td data-label="Pool">${e.pool}</td>
               <td data-label="Pool Length">${e.poolLength} m</td>
               <td data-label="Session">${e.sessionType}</td>
+              <td data-label="Start Type">${e.startType}</td>
               <td data-label="Time">${formatTime(e.time)}</td>
               <td data-label="Action"><button class="delete-btn" onclick="deleteEntry(${e.index})">X</button></td>
             </tr>
           `).join("");
         } else {
+          // Always show the "No records yet" message for each event
           table.innerHTML += `
             <tr>
-              <td colspan="6" style="text-align:center; font-style: italic; color: #777;">No records yet</td>
+              <td colspan="7" style="text-align:center; font-style: italic; color: #777;">No records yet</td>
             </tr>
           `;
         }
@@ -432,7 +467,8 @@
       displayAllEvents();
     }
 
-    initializeData();
+    // Call initializeData on window load
+    window.onload = initializeData;
   </script>
 </body>
 </html>
