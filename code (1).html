@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nikki's Swim Tracker</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary-color: #0077b6;
+      --background-color: #f0f8ff;
+      --text-color: #333;
+      --highlight-color: #d0f0c0;
+    }
+
+    @font-face {
+      font-family: 'Lemon Milk';
+      src: url('https://fonts.cdnfonts.com/s/32466/LemonMilkbold.woff') format('woff');
+      font-weight: bold;
+    }
+
+    body {
+      font-family: 'Lemon Milk', sans-serif;
+      margin: 1rem;
+      background: var(--background-color);
+      color: var(--text-color);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Montserrat', sans-serif;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 0.8rem;
+      display: block;
+    }
+
+    select, input, button {
+      padding: 0.5rem;
+      margin: 0.3rem 0;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    .event-section {
+      margin-top: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+
+    th, td {
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    .personal-best {
+      background-color: var(--highlight-color);
+    }
+
+    .delete-btn {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .session-btn {
+      padding: 0.5rem 1rem;
+      margin-right: 0.5rem;
+      border: 2px solid var(--primary-color);
+      background-color: white;
+      color: var(--primary-color);
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 5px;
+      user-select: none;
+      width: 48%;
+      box-sizing: border-box;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .session-btn.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .session-container {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      th {
+        display: none;
+      }
+      td {
+        position: relative;
+        padding-left: 50%;
+      }
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-left: 10px;
+        font-weight: bold;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Nikki's Swim Tracker</h1>
+  </header>
+
+  <main class="container">
+    <label for="event">Event:</label>
+    <select id="event">
+      <option value="">-- Select Event --</option>
+      <option value="50 m butterfly">50 m butterfly</option>
+      <option value="100 m butterfly">100 m butterfly</option>
+      <option value="200 m butterfly">200 m butterfly</option>
+      <option value="50 m backstroke">50 m backstroke</option>
+      <option value="100 m backstroke">100 m backstroke</option>
+      <option value="200 m backstroke">200 m backstroke</option>
+      <option value="50 m breaststroke">50 m breaststroke</option>
+      <option value="100 m breaststroke">100 m breaststroke</option>
+      <option value="200 m breaststroke">200 m breaststroke</option>
+      <option value="50 m freestyle">50 m freestyle</option>
+      <option value="100 m freestyle">100 m freestyle</option>
+      <option value="200 m freestyle">200 m freestyle</option>
+      <option value="400 m freestyle">400 m freestyle</option>
+      <option value="800 m freestyle">800 m freestyle</option>
+      <option value="1500 m freestyle">1500 m freestyle</option>
+    </select>
+
+    <label for="minutes">Minutes:</label>
+    <input type="number" id="minutes" placeholder="e.g., 1" min="0" />
+
+    <label for="seconds">Seconds:</label>
+    <input type="number" id="seconds" placeholder="e.g., 23.45" step="0.01" min="0" max="59.99" />
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" />
+
+    <label for="pool">Pool:</label>
+    <input type="text" id="pool" placeholder="Pool name/location" />
+
+    <label>Pool Length:</label>
+    <div class="session-container">
+      <button type="button" class="session-btn active" onclick="selectPoolLength('25', this)">25m</button>
+      <button type="button" class="session-btn" onclick="selectPoolLength('50', this)">50m</button>
+    </div>
+    <input type="hidden" id="poolLength" value="25" />
+
+    <label>Session Type:</label>
+    <div class="session-container">
+      <button type="button" class="session-btn active" onclick="selectSessionType('Training', this)">Training</button>
+      <button type="button" class="session-btn" onclick="selectSessionType('Competition', this)">Competition</button>
+    </div>
+    <input type="hidden" id="sessionType" value="Training" />
+
+    <button onclick="addTime()">Add Entry</button>
+    <button onclick="clearData()">Clear All</button>
+
+    <div id="eventSections"></div>
+
+    <h2 style="margin-top: 3rem; text-align: center;">All Events</h2>
+    <div id="allEventsSection"></div>
+  </main>
+
+  <script>
+    const storageKey = "swimTimes";
+
+    const eventsOrder = [
+      "50 m butterfly",
+      "100 m butterfly",
+      "200 m butterfly",
+      "50 m backstroke",
+      "100 m backstroke",
+      "200 m backstroke",
+      "50 m breaststroke",
+      "100 m breaststroke",
+      "200 m breaststroke",
+      "50 m freestyle",
+      "100 m freestyle",
+      "200 m freestyle",
+      "400 m freestyle",
+      "800 m freestyle",
+      "1500 m freestyle"
+    ];
+
+    function selectSessionType(type, btn) {
+      document.getElementById('sessionType').value = type;
+      toggleActiveButton(btn);
+    }
+
+    function selectPoolLength(length, btn) {
+      document.getElementById('poolLength').value = length;
+      toggleActiveButton(btn);
+    }
+
+    function toggleActiveButton(btn) {
+      const buttons = btn.parentNode.querySelectorAll('.session-btn');
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function addTime() {
+      const event = document.getElementById("event").value;
+      const minutes = parseInt(document.getElementById("minutes").value) || 0;
+      const seconds = parseFloat(document.getElementById("seconds").value);
+      const date = document.getElementById("date").value;
+      const pool = document.getElementById("pool").value.trim();
+      const sessionType = document.getElementById("sessionType").value;
+      const poolLength = document.getElementById("poolLength").value;
+
+      if (!validateInputs(event, seconds, date, pool)) return;
+
+      const totalSeconds = minutes * 60 + seconds;
+      const entry = { date, event, time: totalSeconds, pool, sessionType, poolLength };
+      const data = JSON.parse(localStorage.getItem(storageKey)) || [];
+      data.push(entry);
+      localStorage.setItem(storageKey, JSON.stringify(data));
+
+      resetInputs();
+      displayGroupedEvents();
+      displayAllEvents();
+    }
+
+    function validateInputs(event, seconds, date, pool) {
+      if (!event) {
+        alert("Please select an event.");
+        return false;
+      }
+      if (isNaN(seconds) || seconds < 0 || seconds >= 60) {
+        alert("Seconds must be between 0 and 59.99");
+        return false;
+      }
+      if (!date) {
+        alert("Please select a date.");
+        return false;
+      }
+      if (!pool) {
+        alert("Please enter the pool name/location.");
+        return false;
+      }
+      return true;
+    }
+
+    function resetInputs() {
+      document.getElementById("event").value = "";
+      document.getElementById("minutes").value = "";
+      document.getElementById("seconds").value = "";
+      document.getElementById("date").value = "";
+      document.getElementById("pool").value = "";
+      selectSessionType('Training', document.querySelectorAll('.session-container')[1].querySelector('.session-btn'));
+      selectPoolLength('25', document.querySelectorAll('.session-container')[0].querySelector('.session-btn'));
+    }
+
+    function clearData() {
+      if (confirm("Are you sure you want to clear all swim records?")) {
+        localStorage.clear(); // Clear all entries from local storage
+        displayGroupedEvents();
+        displayAllEvents();
+      }
+    }
+
+    function deleteEntry(index) {
+      const data = JSON.parse(localStorage.getItem(storageKey)) || [];
+      data.splice(index, 1);
+      localStorage.setItem(storageKey, JSON.stringify(data));
+      displayGroupedEvents();
+      displayAllEvents();
+    }
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const sec = (seconds % 60).toFixed(2).padStart(5, '0');
+      return `${min}:${sec}`;
+    }
+
+    function formatDate(dateStr) {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return new Date(dateStr).toLocaleDateString(undefined, options);
+    }
+
+    function displayGroupedEvents() {
+      const data = JSON.parse(localStorage.getItem(storageKey)) || [];
+      const grouped = {};
+      const personalBests = {};
+
+      data.forEach((entry, index) => {
+        if (!grouped[entry.event]) grouped[entry.event] = [];
+        grouped[entry.event].push({ ...entry, index });
+
+        if (!personalBests[entry.event] || entry.time < personalBests[entry.event].time) {
+          personalBests[entry.event] = entry;
+        }
+      });
+
+      const eventSections = document.getElementById("eventSections");
+      eventSections.innerHTML = "";
+
+      // Sort events based on predefined order
+      eventsOrder.forEach(eventName => {
+        const section = document.createElement("div");
+        section.className = "event-section";
+        const title = document.createElement("h2");
+        title.textContent = eventName;
+        section.appendChild(title);
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Pool</th>
+              <th>Pool Length</th>
+              <th>Session</th>
+              <th>Time (mm:ss.ss)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+
+        // Sort the entries for the current event by time
+        if (grouped[eventName] && grouped[eventName].length > 0) {
+          grouped[eventName].sort((a, b) => a.time - b.time); // Sort by time
+          table.innerHTML += grouped[eventName].map(e => `
+            <tr class="${personalBests[eventName].index === e.index ? 'personal-best' : ''}">
+              <td data-label="Date">${formatDate(e.date)}</td>
+              <td data-label="Pool">${e.pool}</td>
+              <td data-label="Pool Length">${e.poolLength} m</td>
+              <td data-label="Session">${e.sessionType}</td>
+              <td data-label="Time">${formatTime(e.time)}</td>
+              <td data-label="Action"><button class="delete-btn" onclick="deleteEntry(${e.index})">X</button></td>
+            </tr>
+          `).join("");
+        } else {
+          table.innerHTML += `
+            <tr>
+              <td colspan="6" style="text-align:center; font-style: italic; color: #777;">No records yet</td>
+            </tr>
+          `;
+        }
+
+        table.innerHTML += `
+          </tbody>
+        `;
+        section.appendChild(table);
+        eventSections.appendChild(section);
+      });
+    }
+
+    function displayAllEvents() {
+      const data = JSON.parse(localStorage.getItem(storageKey)) || [];
+      const allEventsSection = document.getElementById("allEventsSection");
+      allEventsSection.innerHTML = "";
+
+      // Create a table for all events
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Records</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+
+      eventsOrder.forEach(eventName => {
+        const eventRecords = data.filter(entry => entry.event === eventName);
+        if (eventRecords.length > 0) {
+          table.innerHTML += `
+            <tr>
+              <td>${eventName}</td>
+              <td>${eventRecords.length} record(s)</td>
+            </tr>
+          `;
+        } else {
+          table.innerHTML += `
+            <tr>
+              <td>${eventName}</td>
+              <td>No records yet</td>
+            </tr>
+          `;
+        }
+      });
+
+      table.innerHTML += `
+        </tbody>
+      `;
+      allEventsSection.appendChild(table);
+    }
+
+    // Initialize on page load
+    function initializeData() {
+      displayGroupedEvents();
+      displayAllEvents();
+    }
+
+    initializeData();
+  </script>
+</body>
+</html>
